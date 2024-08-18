@@ -3,8 +3,8 @@ checkpoint_dir: './outputs/UW/checkpoints/'
 pred_dir: './outputs/UW/plots/prediction/'
 CM_dir: './outputs/UW/plots/Confusion_Matrix/'
 
-TASK: 'MTL-Emb' #'classification' 'regression' 'MTL' 'MTL-Emb'
-STEPS: 500
+TASK: 'regression'#'classification' 'regression' 'MTL' 'MTL-Emb'
+STEPS: 3
 BATCH_SIZE: 8
 HISTORY: None
 KERNEL_INIT: "uniform"

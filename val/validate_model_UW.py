@@ -11,12 +11,12 @@ from termcolor import colored
 import yaml
 
 try:
-    with open('./config_files/config_UW_data.yml', 'r') as file:
+    with open('../config_files/config_UW_data.yml', 'r') as file:
         config_data = yaml.safe_load(file)
 except Exception as e:
     print('Error reading the config_data file')
 try:
-    with open('./config_files/config_UW_exp.yml', 'r') as file:
+    with open('../config_files/config_UW_exp.yml', 'r') as file:
         config_exp = yaml.safe_load(file)
 except Exception as e:
     print('Error reading the config_data file')
@@ -255,9 +255,9 @@ class EarlyStopping:
             self.best_score = score
             self.save_checkpoint(val_loss, model, dir_out, str(lr) + '_' + outputfile)
             self.counter = 0
-            eta = show_results(lr, epoch, val_loss, outputfile, CM_dir, generator_val, temporal_len, model, mt_losses,
-                               n_classes)
-            if check(eta) == True:
+            #eta = show_results(lr, epoch, val_loss, outputfile, CM_dir, generator_val, temporal_len, model, mt_losses,
+                              # n_classes)
+            if check(mt_losses.eta.data) == True:
                 self.early_stop = True
 
     def save_checkpoint(self, val_loss, model, dir_out, outputfile):

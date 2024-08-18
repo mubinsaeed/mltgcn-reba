@@ -7,9 +7,12 @@ from val.validate_model_UW import val, EarlyStopping
 from vis.plotCM import *
 import math
 from config_files.config_UW import *
+from tensorboardX import SummaryWriter
+import torchinfo
+
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-seed = 1
+seed = 0
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
@@ -29,9 +32,9 @@ base_data_dir = config_data['base_data_dir']
 train_split = np.load(base_data_dir + config_data['train_dir'])
 val_split = np.load(base_data_dir + config_data['val_dir'])
 
-
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
+    writer = SummaryWriter(f"testing4/lr {lr_}/data")
     output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
     output_file.write('\n------------------------------------------------------------------------\n')
     output_file.write(what_is_different_in_this_code)
@@ -54,24 +57,37 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
         losses_reg = 0.0
         for local_im, local_labels, reba_gt in generator_train:
             local_im, local_labels, reba_gt = local_im.float().cuda(), local_labels.long().cuda(), reba_gt.float().cuda()
-
-            loss_class, loss_reg, loss = mt_losses(local_im, [local_labels, reba_gt])
+            #local_im = np.array()
+            loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt])
             optimizer_.zero_grad()
             loss.backward()
             optimizer_.step()
             for p in mt_losses.eta:
-                p.data.clamp_(0.5)
+                p.data.clamp_(0.5)  #for balancing the both loss function values so one doesn't have larger impact on total_loss
             losses = losses + loss.cpu().data.numpy()
             losses_class = losses_class + loss_class.cpu().data.numpy()
             losses_reg = losses_reg + loss_reg.cpu().data.numpy()
+            #writer.add_scalar('Training/Batch Loss Reg', losses_reg.item(), global_step=stepp)
+           # stepp += 1
+            #writer.flush()
+
+        print(epoch, ': Train: ', np.round(losses, 4), ' Train_class: ',
+              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4))
+        writer.add_scalar('Training/Epoch Loss Reg', losses_reg.item(), global_step=epoch)
+
         vallosses, vallosses_reg, vallosses_class = val(generator_val, model_, mt_losses)
-        print(epoch, ': Train: ', round(losses, 4), ' Val: ', round(vallosses, 4), ' Train_class: ',
-              round(losses_class, 4), ' Train_reg: ', round(losses_reg, 4), ' Val_class: ', round(vallosses_class, 4),
-              ' Val_reg: ', round(vallosses_reg, 4))
+        writer.add_scalar('Validation/Epoch Loss Reg', vallosses_reg.item(), global_step=epoch)
+
+        print(epoch, ': Train: ', np.round(losses, 4), ' Val: ', np.round(vallosses, 4), ' Train_class: ',
+              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4), ' Val_class: ', np.round(vallosses_class, 4),
+              ' Val_reg: ', np.round(vallosses_reg, 4))
+        #writer.add_hparams({'lr': lr_}, {'Trainingloss':losses_reg.item(),'Validationloss': vallosses_reg.item()},global_step=epoch)
+        writer.flush()
+
         output_file.write(
             'EPOCH: %02d\t TrainLoss: %0.04f \t ValLoss: %0.04f \t Train_class: %0.04f \t Train_reg: %0.04f \t Val_class: %0.04f \t Val_reg: %0.04f\n' % (
-                epoch, round(losses, 4), round(vallosses, 4), round(losses_class, 4), round(losses_reg, 4),
-                round(vallosses_class, 4), round(vallosses_reg, 4)))
+                epoch, np.round(losses, 4), np.round(vallosses, 4), np.round(losses_class, 4), np.round(losses_reg, 4),
+                np.round(vallosses_class, 4), np.round(vallosses_reg, 4)))
 
         output_file.close()
         # early_stopping needs the validation loss to check if it has decresed,
@@ -86,13 +102,14 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
         if early_stopping.early_stop:
             print("Early stopping")
             break
-
+    writer.close()
 
 # %% Data preprocessing
 print(colored('---------------------------- Pre-processing ----------------------------', 'green'))
 print(colored('batch_size: ' + str(config_exp['BATCH_SIZE']), 'green'))
 params_train = {'batch_size': config_exp['BATCH_SIZE'], 'shuffle': True}
 training_set = Dataset_with_REBA(train_split, history=HISTORY)
+print(training_set[0][0][0])
 training_generator = data.DataLoader(training_set, num_workers=0, pin_memory=True, worker_init_fn=_init_fn,
                                      **params_train)
 params_val = {'batch_size': config_exp['BATCH_SIZE'], 'shuffle': False}
@@ -127,6 +144,7 @@ print(colored('Size of output reba scores (validation set): ' + str(
 # %% Training
 print(colored('---------------------------- Training ----------------------------', 'green'))
 for lr in config_exp['LR']:
+
     print('---------------------------- lr: ', lr, '----------------------------')
     vallepochloss = np.inf
     if config_exp['TASK'] == 'MTL-Emb':
@@ -143,9 +161,15 @@ for lr in config_exp['LR']:
     model.apply(weightinit)
 
     if config_exp['loss_reg'] == 'MSE' or config_exp['loss_reg'] == 'L1' or config_exp['loss_reg'] == 'SmoothL1':
-        MT_losses = MultiTask2Loss(model=model, loss_fn=criterion_class + criterion_reg).cuda()
+        #MT_losses = RegLoss(model=model, loss_fn=criterion_class + criterion_reg).cuda()
+        MT_losses = RegLoss(model=model, loss_fn=  criterion_reg).cuda()
     elif config_exp['loss_reg'] == 'MSEL1' or config_exp['loss_reg'] == 'MSESmoothL1':
         MT_losses = MultiTask3Loss(model=model, loss_fn=criterion_class + criterion_reg).cuda()
 
     optimizer = optim.Adam(MT_losses.parameters(), lr=float(lr))
+
+
+#torchinfo.summary(model,input_size=(1,1,15,3)) #batchsize,noofsamples,value,xyz
     train(training_generator, val_generator, model, MT_losses, optimizer, float(lr))
+
+

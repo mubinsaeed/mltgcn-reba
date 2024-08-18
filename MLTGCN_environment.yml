@@ -1,5 +1,5 @@
 # conda env create -f environment_MTLGCN.yml
-name: MLTGCN
+name: mltgcn_third
 channels:
   - pytorch
   - defaults
@@ -102,5 +102,3 @@ dependencies:
     - termcolor==1.1.0
     - threadpoolctl==2.1.0
     - tqdm==4.48.2
-prefix: /home/ubuntu/anaconda3/envs/MLTGCN
-
