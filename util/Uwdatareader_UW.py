@@ -17,16 +17,32 @@ def readtxt(fnm):
 end_frame = [1472, 1517, 1145, 1810, 1446, 1703, 1432, 1865, 1535, 1830, 2372, 2316, 1595, 2130, 1601, 2479, 1866, 1593,
              1935, 1404]
 start_frame = [49, 72, 41, 55, 66, 67, 105, 83, 77, 77, 82, 83, 115, 62, 54, 98, 76, 63, 94, 54]
-joints = ['0: right ankle', '1: left ankle', '2: right knee', '3: left knee', '4: right hip',
-          '5: left hip', '6: right wrist', '7: left wrist', '8: right elbow', '9: left elbow',
-          '10: right shoulder', '11: left shoulder', '12: neck', '13: head', '14: center']
+#joints = ['0: right ankle', '1: left ankle', '2: right knee', '3: left knee', '4: right hip',
+#         '5: left hip', '6: right wrist', '7: left wrist', '8: right elbow', '9: left elbow',
+#          '10: right shoulder', '11: left shoulder', '12: neck', '13: head', '14: center']
 
-pairs = {'0: left upperarm': (9, 11), '1: left forearm': (7, 9),
-         '2: left shin': (1, 3), '3: left thigh': (3, 5),  # bones on the left
-         '4: right shin': (0, 2), '5: right thigh': (2, 4),
-         '6: right upperarm': (8, 10), '7: right forearm': (6, 8),  # bones on the right
-         '8: hip': (4, 5), '9: shoulder': (10, 11),
-         '10: neck': (12, 13)}  # bones on the torso
+#pairs = {'0: left upperarm': (9, 11), '1: left forearm': (7, 9),
+#         '2: left shin': (1, 3), '3: left thigh': (3, 5),  # bones on the left
+#        '4: right shin': (0, 2), '5: right thigh': (2, 4),
+#         '6: right upperarm': (8, 10), '7: right forearm': (6, 8),  # bones on the right
+#        '8: hip': (4, 5), '9: shoulder': (10, 11),
+#       '10: neck': (12, 13)}  # bones on the torso
+
+joints = ['0: lower_back', '1: left_knee', '2 :right_knee', '3: left_ankle', '4: right_ankle', '5: neck', '6: left_shoulder',
+            '7: right_shoulder', '8: left_elbow', ' 9: right_elbow', '10: left_wrist', '11: right_wrist', '12: left_hand_1',
+            '13: left_hand_2', '14 :right_hand_1', '15 :right_hand_2', '16: left_big_toe', '17: left_small_toe', '18: right_big_toe',
+            '19: right_small_toe', '20: top_head', '21: back_head', '22: middle_head', '23: left_ear', '24: right_ear', '25: left_hip',
+            '26: right_hip']
+pairs={'0: left upperarm': (8,6),'1: left forearm': (8,10),'2: left shin': (1, 3),'3: left thigh': (1, 25),
+        '4: right shin': (4, 2),'5: right thigh': (2, 26),
+        '6: right upperarm': (9,7),'7: right forearm': (11, 9),
+        '8: hip': (25, 26), '9: shoulder': (6, 7),'10: neck': (5, 22)}
+
+pairs_for_h36M = [[0,25],[0,26],[26,2],[2,4],[4,18],[4,19],[25,1],[1,3],[3,17],
+        [3,16],[0,5],[5,6],[6,8],[8,10],[10,12],[10,13],[5,7],[7,9],[9,11],
+        [11,14],[11,15],[5,22],[22,20],[20,21],[22,23],[22,24]]
+
+
 
 
 class Dataset_with_REBA(data.Dataset):
@@ -160,27 +176,56 @@ def adjacencyMat(pairs, nodeNum):
 
 #
 def hop_create():
-    hop = [
-        [0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1],
-        [np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, 1],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1, np.inf, 0, 1, np.inf, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 1, 0, 1, 1],
-        [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 0, np.inf],
-        [np.inf, np.inf, np.inf, np.inf, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0]]
+
+   # hop = [
+    #    [0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1],
+   #    [np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, 1],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, 1, np.inf, 0, 1, np.inf, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 1, 0, 1, 1],
+    #    [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 0, np.inf],
+    #    [np.inf, np.inf, np.inf, np.inf, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0]]
+    hop =  [[0, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 1],
+            [np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf],
+            [np.inf, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1],
+            [np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [1, np.inf, np.inf, np.inf, np.inf, 0, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, 1, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, 1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, 1, 1, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, 0, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, 0,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf,0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, 0, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, 1, 1, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 0, np.inf, np.inf, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, 1, 1, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, 0, np.inf, np.inf, np.inf],
+            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 1, np.inf, 0, np.inf, np.inf],
+            [1, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0, np.inf],
+            [1, np.inf, 1, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, 0]
+            ]
     return hop
 
 
 #
-def createnewAs(AN, hop_dis, num_node=15):
+def createnewAs(AN, hop_dis, num_node=27):
     A_list = []
     for hop in range(0, 2):
         a_root = np.zeros((num_node, num_node))
@@ -209,10 +254,10 @@ def createnewAs(AN, hop_dis, num_node=15):
 
 
 def getAs():
-    A = adjacencyMat(pairs, 15)
+    A = adjacencyMat(pairs, 27)
     AN = normalize_digraph(A)
     hop_dis = np.asarray(hop_create())
-    As = createnewAs(AN, hop_dis, num_node=15)
+    As = createnewAs(AN, hop_dis, num_node=27)
     return As
 
 

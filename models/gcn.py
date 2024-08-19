@@ -24,7 +24,7 @@ class GCNModel(nn.Module):
             s_gcn(256, 256, spatial_kernel_size, 1),  # (N, 256, T, 15) -> (N,  256, T, 15)
         ))
 
-        self.adaptpool = nn.AdaptiveAvgPool2d((15, 2))
+        self.adaptpool = nn.AdaptiveAvgPool2d((27, 2))
 
     def forward(self, x):
         # data normalization

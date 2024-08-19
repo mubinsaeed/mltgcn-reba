@@ -34,7 +34,7 @@ val_split = np.load(base_data_dir + config_data['val_dir'])
 
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
-    writer = SummaryWriter(f"testing4/lr {lr_}/data")
+    writer = SummaryWriter(f"testing/lr {lr_}/data")
     output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
     output_file.write('\n------------------------------------------------------------------------\n')
     output_file.write(what_is_different_in_this_code)
@@ -169,7 +169,7 @@ for lr in config_exp['LR']:
     optimizer = optim.Adam(MT_losses.parameters(), lr=float(lr))
 
 
-#torchinfo.summary(model,input_size=(1,1,15,3)) #batchsize,noofsamples,value,xyz
-    train(training_generator, val_generator, model, MT_losses, optimizer, float(lr))
+torchinfo.summary(model,input_size=(1,1,27,3)) #batchsize,noofsamples,value,xyz
+    #train(training_generator, val_generator, model, MT_losses, optimizer, float(lr))
 
 
