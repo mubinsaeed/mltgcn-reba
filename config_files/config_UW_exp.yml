@@ -5,7 +5,7 @@ CM_dir: './outputs/UW/plots/Confusion_Matrix/'
 
 TASK: 'regression'#'classification' 'regression' 'MTL' 'MTL-Emb'
 STEPS: 3
-BATCH_SIZE: 8
+BATCH_SIZE: 1
 HISTORY: None
 KERNEL_INIT: "uniform"
 THREADS: 12

@@ -9,7 +9,6 @@ from scipy.stats import spearmanr
 from vis.plotCM import *
 from util.utils import *
 import yaml
-print("jere")
 try:
     with open('./config_files/config_UW_data.yml', 'r') as file:
         config_data = yaml.safe_load(file)

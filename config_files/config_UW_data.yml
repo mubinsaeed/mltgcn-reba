@@ -1,11 +1,11 @@
-base_data_dir: '../Data/UW/'
+base_data_dir: '../Data/HM36/'
 train_dir: 'EDTCN/TrainValSplits/train.npy'
 val_dir: 'EDTCN/TrainValSplits/val.npy'
 split: 'EDTCN/TrainValSplits/val.npy'
-threed_poseloc: 'Poses/'
+threed_poseloc: 'poses/'
 label_dir: 'Labels/ClassNumber/'
 labelnames: 'Labels/uniquelabelnames.npy'
-reba_scores_loc: 'RebaScoreFrameWise/'
+reba_scores_loc: 'scores/'
 
 
 classes: (

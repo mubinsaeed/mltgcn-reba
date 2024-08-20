@@ -22,10 +22,11 @@ except Exception as e:
     print('Error reading the config_data file')
 
 base_data_dir = config_data['base_data_dir']
-val_split = np.load(base_data_dir + config_data['val_dir'])
+#val_split = np.load(base_data_dir + config_data['val_dir'])
+val_split = np.array(['02','07'])
 threed_poseloc = base_data_dir + config_data['threed_poseloc']
 labelloc = base_data_dir + config_data['label_dir']
-labelnames = list(np.load(base_data_dir + config_data['labelnames']))
+#labelnames = list(np.load(base_data_dir + config_data['labelnames']))
 reba_scores_loc = base_data_dir + config_data['reba_scores_loc']
 num_class = config_data['NUMBER_OF_CLASSES']
 def eval(model):

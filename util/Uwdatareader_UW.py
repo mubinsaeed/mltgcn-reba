@@ -49,15 +49,15 @@ class Dataset_with_REBA(data.Dataset):
     def __init__(self, seqlist, history=90):
         self.seqlist = seqlist
         self.poselist = []
-        self.labellist = []
+        #self.labellist = []
         self.rebascorelist = []
         self.history = history
         self.number_of_seq = len(seqlist)
         self.mask = 0
-        base_dir  = config_data['base_data_dir']
+        base_dir = config_data['base_data_dir']
         threed_poseloc = base_dir+config_data['threed_poseloc']
-        labelloc = base_dir+config_data['label_dir']
-        labelnames = list(np.load(base_dir+config_data['labelnames']))
+        #labelloc = base_dir+config_data['label_dir']
+        #labelnames = list(np.load(base_dir+config_data['labelnames']))
         reba_scores_loc = base_dir+config_data['reba_scores_loc']
         
         print('Processing Data ...')
@@ -68,13 +68,13 @@ class Dataset_with_REBA(data.Dataset):
             # threepose = pkl.load(open(jointfeaturesloc + 'node_attr_' + seq + '_pose3d', "rb"))[
             #     'node_glob_pos']  #
             threepose = np.load(threed_poseloc + seq + '_pose3d.npy')
-            labels = np.load(labelloc + seq + '.npy')
-            rebascore = np.loadtxt(reba_scores_loc + seq + '.txt')
+            #labels = np.load(labelloc + seq + '.npy')
+            rebascore = np.load(reba_scores_loc + seq + '.npy')
             # labels = label2index(labels_txt, labelnames)
             # if seq=='15':
             #     print(seq)
-            if len(labels) != np.shape(threepose)[0]:
-                raise Exception('Labels and data dimension does not match in video {}'.format(seq))
+            #if len(labels) != np.shape(threepose)[0]:
+                #raise Exception('Labels and data dimension does not match in video {}'.format(seq))
 
             # threepose = threepose[0:len(labels)]
             if self.history != None:
@@ -95,15 +95,16 @@ class Dataset_with_REBA(data.Dataset):
                     self.rebascorelist.append(xx)
             else:
                 self.poselist.append(threepose)
+                #self.poselist.extend(threepose.flatten())
+                #self.labellist.append(np.array(labels))
 
-                self.labellist.append(np.array(labels))
-
-                self.rebascorelist.append(rebascore)
-
+                #self.rebascorelist.append(rebascore)
+                self.rebascorelist.extend(rebascore.flatten())
 
         if self.history == None:
             lengths = [x.shape[0] for x in self.poselist]
             self.max_len = np.max(lengths)
+        self.poselist = np.concatenate(self.poselist, axis=0)
 
     def __len__(self):
         return len(self.poselist)
@@ -129,7 +130,7 @@ class Dataset_with_REBA(data.Dataset):
         self.max_len = max_len
         X_ = np.zeros(
             [self.number_of_seq, self.max_len, self.poselist[0].shape[1], self.poselist[0].shape[2]]) + mask_value
-        Y_ = np.zeros([self.number_of_seq, self.max_len]) + mask_value
+        #Y_ = np.zeros([self.number_of_seq, self.max_len]) + mask_value
         Z_ = np.zeros([self.number_of_seq, self.max_len]) + mask_value
 
         # print(np.shape(Y[0]),np.shape(Y_))
@@ -137,21 +138,21 @@ class Dataset_with_REBA(data.Dataset):
         for i in range(self.number_of_seq):
             l = self.poselist[i].shape[0]
             X_[i, :l, :, :] = self.poselist[i]
-            Y_[i, :l] = self.labellist[i]
+         #   Y_[i, :l] = self.labellist[i]
             Z_[i, :l] = self.rebascorelist[i]
             mask[i, :l] = 1
         self.poselist = X_
-        self.labellist = Y_
+       # self.labellist = Y_
         self.rebascorelist = Z_
         self.mask = mask[:, :, None]
 
     def __getitem__(self, index):
         pose = self.poselist[index]
-        lab = self.labellist[index]
+        #lab = self.labellist[index]
         reba = self.rebascorelist[index]
         # print(pose.shape, np.asarray(lab).shape)
-        return np.double(pose), np.double(np.asarray(lab)), np.double(reba)
-
+        #return np.double(pose), np.double(np.asarray(lab)), np.double(reba)
+        return np.double(pose),np.double(reba)
 
 def normalize_digraph(A):
     Dl = np.sum(A, 0)

@@ -3,12 +3,13 @@ import random
 from losses.loss_UW import *
 from models.model_MT_UW import *
 from util.Uwdatareader_UW import *
-from val.validate_model_UW import val, EarlyStopping
-from vis.plotCM import *
+#from val.validate_model_UW import val, EarlyStopping  Todo
+#from vis.plotCM import * Todo
+import sklearn
 import math
 from config_files.config_UW import *
 from tensorboardX import SummaryWriter
-import torchinfo
+#import torchinfo
 
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -29,9 +30,10 @@ def _init_fn(worker_id):
 
 # %% Training
 base_data_dir = config_data['base_data_dir']
-train_split = np.load(base_data_dir + config_data['train_dir'])
-val_split = np.load(base_data_dir + config_data['val_dir'])
-
+#train_split = np.load(base_data_dir + config_data['train_dir'])
+#val_split = np.load(base_data_dir + config_data['val_dir'])
+train_split = np.array(['01','05','04','10','03','06','08','09','11'])
+val_split = np.array(['02','07'])
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
     writer = SummaryWriter(f"testing/lr {lr_}/data")
@@ -48,15 +50,15 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     output_file.write('\n------- lr: ' + str(lr_) + ', batch_size: ' + str(config_exp['BATCH_SIZE']) + '-----------\n')
     output_file.close()
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
+    #early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
     for epoch in range(config_exp['STEPS']):
         output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
         losses = 0.0
         losses_class = 0.0
         losses_reg = 0.0
-        for local_im, local_labels, reba_gt in generator_train:
-            local_im, local_labels, reba_gt = local_im.float().cuda(), local_labels.long().cuda(), reba_gt.float().cuda()
+        for local_im, reba_gt in generator_train:
+            local_im,  reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
             #local_im = np.array()
             loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt])
             optimizer_.zero_grad()
@@ -109,7 +111,6 @@ print(colored('---------------------------- Pre-processing ---------------------
 print(colored('batch_size: ' + str(config_exp['BATCH_SIZE']), 'green'))
 params_train = {'batch_size': config_exp['BATCH_SIZE'], 'shuffle': True}
 training_set = Dataset_with_REBA(train_split, history=HISTORY)
-print(training_set[0][0][0])
 training_generator = data.DataLoader(training_set, num_workers=0, pin_memory=True, worker_init_fn=_init_fn,
                                      **params_train)
 params_val = {'batch_size': config_exp['BATCH_SIZE'], 'shuffle': False}
@@ -125,9 +126,9 @@ print(colored('Size of input (training set): ' + str((
     len(training_set.poselist), training_set.poselist[-1].shape[0],
     training_set.poselist[-1].shape[1],
     training_set.poselist[-1].shape[2])), 'blue'))
-print(colored(
-    'Size of output labels (training set): ' + str((len(training_set.labellist), len(training_set.labellist[-1]))),
-    'blue'))
+#print(colored(
+#    'Size of output labels (training set): ' + str((len(training_set.labellist), len(training_set.labellist[-1]))),
+#    'blue'))
 print(colored('Size of output reba scores (training set): ' + str(
     (len(training_set.rebascorelist), training_set.rebascorelist[-1].shape[0])), 'blue'))
 
@@ -135,9 +136,9 @@ print(colored('Size of input (validation set): ' + str((
     len(val_set.poselist), val_set.poselist[-1].shape[0],
     val_set.poselist[-1].shape[1],
     val_set.poselist[-1].shape[2])), 'blue'))
-print(colored(
-    'Size of output labels (validation set): ' + str((len(val_set.labellist), len(val_set.labellist[-1]))),
-    'blue'))
+#print(colored(
+#    'Size of output labels (validation set): ' + str((len(val_set.labellist), len(val_set.labellist[-1]))),
+#    'blue'))
 print(colored('Size of output reba scores (validation set): ' + str(
     (len(val_set.rebascorelist), val_set.rebascorelist[-1].shape[0])), 'blue'))
 
@@ -169,7 +170,7 @@ for lr in config_exp['LR']:
     optimizer = optim.Adam(MT_losses.parameters(), lr=float(lr))
 
 
-torchinfo.summary(model,input_size=(1,1,27,3)) #batchsize,noofsamples,value,xyz
-    #train(training_generator, val_generator, model, MT_losses, optimizer, float(lr))
+#torchinfo.summary(model,input_size=(1,1,27,3)) #batchsize,noofsamples,value,xyz
+    train(training_generator, val_generator, model, MT_losses, optimizer, float(lr))
 
 
