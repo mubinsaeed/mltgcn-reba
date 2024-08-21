@@ -98,13 +98,13 @@ class Dataset_with_REBA(data.Dataset):
                 #self.poselist.extend(threepose.flatten())
                 #self.labellist.append(np.array(labels))
 
-                #self.rebascorelist.append(rebascore)
-                self.rebascorelist.extend(rebascore.flatten())
+                self.rebascorelist.append(rebascore)
+                #self.rebascorelist.extend(rebascore.flatten())
 
         if self.history == None:
             lengths = [x.shape[0] for x in self.poselist]
             self.max_len = np.max(lengths)
-        self.poselist = np.concatenate(self.poselist, axis=0)
+        #self.poselist = np.concatenate(self.poselist, axis=0)
 
     def __len__(self):
         return len(self.poselist)

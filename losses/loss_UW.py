@@ -19,13 +19,13 @@ class RegLoss(nn.Module):
         self.loss_fn = loss_fn
         self.eta = nn.Parameter(torch.FloatTensor(len(loss_fn)).fill_(1.), requires_grad=True)  # uniform_(0., 1.)
 
-
-    def forward(self, input, targets):
+    def forward(self, input, targets,cc=0):
         reba_pre, _ = self.model(input)
         loss_reg = self.eta[0] * self.loss_fn[0](reba_pre[targets[0] != -1].view(-1),
                                                  targets[0][targets[0] != -1].view(-1))
 
         # total_loss = loss_class + loss_reg
+        #print(loss_reg)
         return torch.tensor([0]), loss_reg, loss_reg #loss_reg, total_loss.sum()
 
 

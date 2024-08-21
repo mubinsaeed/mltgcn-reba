@@ -1,16 +1,17 @@
+import torch
 import torch.optim as optim
 import random
 from losses.loss_UW import *
 from models.model_MT_UW import *
 from util.Uwdatareader_UW import *
-#from val.validate_model_UW import val, EarlyStopping  Todo
-#from vis.plotCM import * Todo
+from val.validate_model_UW import val, EarlyStopping
+from vis.plotCM import *
 import sklearn
 import math
 from config_files.config_UW import *
 from tensorboardX import SummaryWriter
 #import torchinfo
-
+from tqdm.auto import tqdm
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 seed = 0
@@ -22,6 +23,7 @@ random.seed(seed)  # Python random module.
 
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
+early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
 
 def _init_fn(worker_id):
@@ -32,8 +34,9 @@ def _init_fn(worker_id):
 base_data_dir = config_data['base_data_dir']
 #train_split = np.load(base_data_dir + config_data['train_dir'])
 #val_split = np.load(base_data_dir + config_data['val_dir'])
-train_split = np.array(['01','05','04','10','03','06','08','09','11'])
-val_split = np.array(['02','07'])
+#train_split = np.array(['01','05','04','10','03','06','08','09','11'])
+train_split = np.array(['01'])
+val_split = np.array(['09'])
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
     writer = SummaryWriter(f"testing/lr {lr_}/data")
@@ -52,15 +55,18 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     # initialize the early_stopping object
     #early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
-    for epoch in range(config_exp['STEPS']):
+    for epoch in tqdm(range(config_exp['STEPS'])):
         output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
         losses = 0.0
         losses_class = 0.0
         losses_reg = 0.0
+        cc= 0
         for local_im, reba_gt in generator_train:
+            cc+=1
+            #local_im, reba_gt = np.expand_dims(local_im, axis=0),np.expand_dims(local_im, axis=0)
             local_im,  reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
-            #local_im = np.array()
-            loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt])
+            #local_im,reba_gt = torch.unsqueeze(local_im,dim=0),torch.unsqueeze(reba_gt,dim=0)
+            loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt],cc)
             optimizer_.zero_grad()
             loss.backward()
             optimizer_.step()
@@ -121,26 +127,6 @@ max_len = max(np.max(training_set.max_len), np.max(val_set.max_len))
 max_len = int(np.ceil(max_len / (2 ** n_layers))) * 2 ** n_layers
 training_set.mask_data(max_len, mask_value=-1)
 val_set.mask_data(max_len, mask_value=-1)
-print(colored('Maximum sequence length: ' + str(max_len), 'blue'))
-print(colored('Size of input (training set): ' + str((
-    len(training_set.poselist), training_set.poselist[-1].shape[0],
-    training_set.poselist[-1].shape[1],
-    training_set.poselist[-1].shape[2])), 'blue'))
-#print(colored(
-#    'Size of output labels (training set): ' + str((len(training_set.labellist), len(training_set.labellist[-1]))),
-#    'blue'))
-print(colored('Size of output reba scores (training set): ' + str(
-    (len(training_set.rebascorelist), training_set.rebascorelist[-1].shape[0])), 'blue'))
-
-print(colored('Size of input (validation set): ' + str((
-    len(val_set.poselist), val_set.poselist[-1].shape[0],
-    val_set.poselist[-1].shape[1],
-    val_set.poselist[-1].shape[2])), 'blue'))
-#print(colored(
-#    'Size of output labels (validation set): ' + str((len(val_set.labellist), len(val_set.labellist[-1]))),
-#    'blue'))
-print(colored('Size of output reba scores (validation set): ' + str(
-    (len(val_set.rebascorelist), val_set.rebascorelist[-1].shape[0])), 'blue'))
 
 # %% Training
 print(colored('---------------------------- Training ----------------------------', 'green'))

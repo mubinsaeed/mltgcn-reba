@@ -101,10 +101,10 @@ def val(generator, model, MT_losses):
         losses = 0.0
         losses_reg = 0.0
         losses_class = 0.0
-        for local_im, local_labels, reba_gt in generator:
-            local_im, local_labels, reba_gt = local_im.float().cuda(), local_labels.long().cuda(), reba_gt.float().cuda()
-
-            loss_class, loss_reg, loss = MT_losses(local_im, [local_labels, reba_gt])
+        for local_im, reba_gt in generator:
+            local_im, reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
+            #local_im,reba_gt = torch.unsqueeze(local_im,dim=0),torch.unsqueeze(reba_gt,dim=0)
+            loss_class, loss_reg, loss = MT_losses(local_im, [reba_gt])
             losses = losses + loss.cpu().data.numpy()
             losses_reg = losses_reg + loss_reg.cpu().data.numpy()
             losses_class = losses_class + loss_class.cpu().data.numpy()
