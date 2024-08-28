@@ -24,9 +24,9 @@ class RegLoss(nn.Module):
         loss_reg = self.eta[0] * self.loss_fn[0](reba_pre[targets[0] != -1].view(-1),
                                                  targets[0][targets[0] != -1].view(-1))
 
-        # total_loss = loss_class + loss_reg
-        #print(loss_reg)
-        return torch.tensor([0]), loss_reg, loss_reg #loss_reg, total_loss.sum()
+        total_loss = loss_reg
+        #print(loss_reg)t
+        return torch.tensor([0]), loss_reg, total_loss.sum() #loss_reg, total_loss.sum()
 
 
 class CrossEntLoss(nn.Module):

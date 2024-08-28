@@ -3,7 +3,6 @@ import yaml
 from termcolor import colored
 from torch import nn
 
-print("entered")
 try:
     with open('../config_files/config_UW_data.yml', 'r') as file:
         config_data = yaml.safe_load(file)

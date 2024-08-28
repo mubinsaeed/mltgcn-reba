@@ -1,14 +1,14 @@
 import matplotlib.pylab as plt
 import matplotlib as mlt
 import matplotlib.patches as mpatches
-import seaborn as sns
+#import seaborn as sns
 import numpy as np
 import os
 import scipy
 import scipy.io as sio
 # import cv2
 # from numba import jit, int64
-import cv2
+#import cv2
 from collections import OrderedDict
 
 plt.rcParams['figure.figsize'] = [10., 10.]
@@ -45,11 +45,11 @@ def imshow_(x, **kwargs):
 
 
 # ------------- Data -------------
-def mask_data(X, Y, Z, max_len=None, mask_value=0):
+def mask_data(X, Z, max_len=None, mask_value=0):
     if max_len is None:
         max_len = np.max([x.shape[0] for x in X])
     X_ = np.zeros([len(X), max_len, X[0].shape[1], X[0].shape[2]]) + mask_value
-    Y_ = np.zeros([len(X), max_len]) + mask_value
+    #Y_ = np.zeros([len(X), max_len]) + mask_value
     Z_ = np.zeros([len(X), max_len]) + mask_value
 
     # print(np.shape(Y[0]),np.shape(Y_))
@@ -57,10 +57,10 @@ def mask_data(X, Y, Z, max_len=None, mask_value=0):
     for i in range(len(X)):
         l = X[i].shape[0]
         X_[i, :l,:,:] = X[i]
-        Y_[i, :l] = Y[i]
+       # Y_[i, :l] = Y[i]
         Z_[i, :l] = Z[i]
         mask[i, :l] = 1
-    return X_, Y_,Z_, mask[:, :, None]
+    return X_,Z_, mask[:, :, None]
 # def mask_data(X, Y, max_len=None, mask_value=0):
 #     if max_len is None:
 #         max_len = np.max([x.shape[0] for x in X])

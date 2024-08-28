@@ -14,7 +14,7 @@ from tensorboardX import SummaryWriter
 from tqdm.auto import tqdm
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-seed = 0
+seed = 1
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
@@ -23,7 +23,7 @@ random.seed(seed)  # Python random module.
 
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
-early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
+#early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
 
 def _init_fn(worker_id):
@@ -34,9 +34,9 @@ def _init_fn(worker_id):
 base_data_dir = config_data['base_data_dir']
 #train_split = np.load(base_data_dir + config_data['train_dir'])
 #val_split = np.load(base_data_dir + config_data['val_dir'])
-#train_split = np.array(['01','05','04','10','03','06','08','09','11'])
-train_split = np.array(['01'])
-val_split = np.array(['09'])
+train_split = np.array(['01','05','04','10','03','06','08','09','11'])
+#train_split = np.array(['01'])
+val_split = np.array(['02','07'])
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
     writer = SummaryWriter(f"testing/lr {lr_}/data")
@@ -53,20 +53,20 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     output_file.write('\n------- lr: ' + str(lr_) + ', batch_size: ' + str(config_exp['BATCH_SIZE']) + '-----------\n')
     output_file.close()
     # initialize the early_stopping object
-    #early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
+    early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
     for epoch in tqdm(range(config_exp['STEPS'])):
         output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
         losses = 0.0
         losses_class = 0.0
         losses_reg = 0.0
-        cc= 0
+        stepp= 0
         for local_im, reba_gt in generator_train:
-            cc+=1
+            stepp+=1
             #local_im, reba_gt = np.expand_dims(local_im, axis=0),np.expand_dims(local_im, axis=0)
             local_im,  reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
             #local_im,reba_gt = torch.unsqueeze(local_im,dim=0),torch.unsqueeze(reba_gt,dim=0)
-            loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt],cc)
+            loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt])
             optimizer_.zero_grad()
             loss.backward()
             optimizer_.step()
@@ -76,26 +76,27 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
             losses_class = losses_class + loss_class.cpu().data.numpy()
             losses_reg = losses_reg + loss_reg.cpu().data.numpy()
             #writer.add_scalar('Training/Batch Loss Reg', losses_reg.item(), global_step=stepp)
+            print(f'The batch no {stepp} for epoch {epoch}: running loss:{losses_reg}')
            # stepp += 1
             #writer.flush()
 
-        print(epoch, ': Train: ', np.round(losses, 4), ' Train_class: ',
-              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4))
-        writer.add_scalar('Training/Epoch Loss Reg', losses_reg.item(), global_step=epoch)
+        print(epoch, ': Train: ', np.round(losses/len(train_split), 4), ' Train_class: ',
+              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg/len(train_split), 4))
+        writer.add_scalar('Training/Epoch Loss Reg', losses_reg.item()/len(train_split), global_step=epoch)
 
         vallosses, vallosses_reg, vallosses_class = val(generator_val, model_, mt_losses)
-        writer.add_scalar('Validation/Epoch Loss Reg', vallosses_reg.item(), global_step=epoch)
+        writer.add_scalar('Validation/Epoch Loss Reg', vallosses_reg.item()/len(val_split), global_step=epoch)
 
-        print(epoch, ': Train: ', np.round(losses, 4), ' Val: ', np.round(vallosses, 4), ' Train_class: ',
-              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4), ' Val_class: ', np.round(vallosses_class, 4),
-              ' Val_reg: ', np.round(vallosses_reg, 4))
+        print(epoch, ': Train: ', np.round(losses/len(train_split), 4), ' Val: ', np.round(vallosses/len(val_split), 4), ' Train_class: ',
+              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg/len(train_split), 4), ' Val_class: ', np.round(vallosses_class, 4),
+              ' Val_reg: ', np.round(vallosses_reg/len(val_split), 4))
         #writer.add_hparams({'lr': lr_}, {'Trainingloss':losses_reg.item(),'Validationloss': vallosses_reg.item()},global_step=epoch)
         writer.flush()
 
         output_file.write(
             'EPOCH: %02d\t TrainLoss: %0.04f \t ValLoss: %0.04f \t Train_class: %0.04f \t Train_reg: %0.04f \t Val_class: %0.04f \t Val_reg: %0.04f\n' % (
-                epoch, np.round(losses, 4), np.round(vallosses, 4), np.round(losses_class, 4), np.round(losses_reg, 4),
-                np.round(vallosses_class, 4), np.round(vallosses_reg, 4)))
+                epoch, np.round(losses/len(train_split), 4), np.round(vallosses/len(val_split), 4), np.round(losses_class, 4), np.round(losses_reg/len(train_split), 4),
+                np.round(vallosses_class, 4), np.round(vallosses_reg/len(val_split), 4)))
 
         output_file.close()
         # early_stopping needs the validation loss to check if it has decresed,
