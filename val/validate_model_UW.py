@@ -41,23 +41,23 @@ def eval(model):
     reba_gt_list = []
     listpred_for_CM = []
     coef_list = []
-    max_len = 2384
+    max_len = 20000
     with torch.no_grad():
         for seq in val_split:
             threepose = np.load(threed_poseloc + seq + '_pose3d.npy')
-            labels_gt = np.load(labelloc + seq + '.npy')
-            reba_gt = np.loadtxt(reba_scores_loc + seq + '.txt')
-            threepose, _, _, mask = mask_data([threepose], [labels_gt], [reba_gt], max_len, mask_value=-1)
+            #labels_gt = np.load(labelloc + seq + '.npy')
+            reba_gt = np.load(reba_scores_loc + seq + '.npy')
+            threepose, _, mask = mask_data([threepose],  [reba_gt], max_len, mask_value=-1)
             x = Variable(torch.Tensor(threepose)).float().cuda()
-            score, reba_pre = model(x)
-            score = unmask(score.cpu().numpy(), mask)
+            reba_pre, _ = model(x)
+            #score = unmask(score.cpu().numpy(), mask)
             reba_pre = unmask(reba_pre.cpu().numpy(), mask)
 
-            scorelist = [score]
+            #scorelist = [score]
             rebalist = [reba_pre]
-            ll = np.asarray(labels_gt)
-            lp = np.asarray([item for sublist in scorelist for item in sublist])
-            llp = np.argmax(lp.squeeze(), axis=1)
+           # ll = np.asarray(labels_gt)
+           # lp = np.asarray([item for sublist in scorelist for item in sublist])
+           # llp = np.argmax(lp.squeeze(), axis=1)
             reba_pre = np.asarray([item for sublist in rebalist for item in sublist]).squeeze()
             coef, p = spearmanr(reba_pre, reba_gt)
             coef_list.append(100 * coef)
@@ -69,19 +69,19 @@ def eval(model):
             else:
                 print('Samples are correlated (reject H0) p=%.3f' % p)
             MSE.append(((reba_pre - reba_gt) ** 2).mean(axis=0))
-            labellist.append(ll)
-            predlist.append(lp.squeeze())
-            listpred_for_CM.append(llp)
+         #   labellist.append(ll)
+          #  predlist.append(lp.squeeze())
+          #  listpred_for_CM.append(llp)
             reba_pre_list.append(reba_pre)
             reba_gt_list.append(reba_gt)
-            EDIT.append(edit_score(llp, ll))
-            OVERLAP_F1.append(overlap_f1(llp, ll, n_classes=num_class))
+         #   EDIT.append(edit_score(llp, ll))
+         #   OVERLAP_F1.append(overlap_f1(llp, ll, n_classes=num_class))
 
-        flat_listlabel = [item for sublist in labellist for item in sublist]
-        flat_listpred = [item for sublist in predlist for item in sublist] # scores
-        flat_listpred_for_CM = [item for sublist in listpred_for_CM for item in sublist] # label class
-        result = compute_class_ap(np.asarray(flat_listpred), np.asarray(flat_listlabel))
-        return listpred_for_CM, labellist, flat_listpred_for_CM,  flat_listlabel, flat_listpred, reba_gt_list, reba_pre_list, result, coef_list, EDIT, OVERLAP_F1, MSE
+        #flat_listlabel = [item for sublist in labellist for item in sublist]
+       # flat_listpred = [item for sublist in predlist for item in sublist] # scores
+       # flat_listpred_for_CM = [item for sublist in listpred_for_CM for item in sublist] # label class
+      #  result = compute_class_ap(np.asarray(flat_listpred), np.asarray(flat_listlabel))
+        return  reba_gt_list, reba_pre_list, coef_list, MSE
 
 
 
@@ -98,18 +98,27 @@ def compute_class_ap(pred_list, label_list):
 def val(generator, model, MT_losses):
     model.eval()
     with torch.no_grad():
-        losses = 0.0
-        losses_reg = 0.0
-        losses_class = 0.0
-        for local_im, local_labels, reba_gt in generator:
-            local_im, local_labels, reba_gt = local_im.float().cuda(), local_labels.long().cuda(), reba_gt.float().cuda()
+        losses = []
+        losses_reg = []
+        losses_class = []
 
-            loss_class, loss_reg, loss = MT_losses(local_im, [local_labels, reba_gt])
-            losses = losses + loss.cpu().data.numpy()
-            losses_reg = losses_reg + loss_reg.cpu().data.numpy()
-            losses_class = losses_class + loss_class.cpu().data.numpy()
-    model.train()
-    return losses, losses_reg, losses_class
+        model.eval()
+        with torch.no_grad():
+            for local_im, reba_gt in generator:
+                local_im, reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
+                local_im, reba_gt = torch.unsqueeze(local_im, dim=0), torch.unsqueeze(reba_gt, dim=0)
+                loss_class, loss_reg, loss = MT_losses(local_im, [reba_gt])
+
+                losses.append(loss.cpu().data.numpy())
+                losses_reg.append(loss_reg.cpu().data.numpy())
+                losses_class.append(loss_class.cpu().data.numpy())
+
+        model.train()
+        mean_losses = np.mean(losses)
+        mean_losses_reg = np.mean(losses_reg)
+        mean_losses_class = np.mean(losses_class)
+
+        return mean_losses, mean_losses_reg, mean_losses_class
 
 
 def bestval(generator, max_len, model, n_class):

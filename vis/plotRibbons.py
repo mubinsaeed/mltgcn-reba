@@ -60,23 +60,8 @@ def plot_reba(P_test, y_test,labels, classes_list, saving_dir=None, data='UW'):
         n = y_test[i].shape[0]
         t = np.arange(0, y_test[i].shape[0])
         reba_to_plot = P_test[i] #np.round(P_test[i])
-        axs[i].plot(t, y_test[i], label='Ground Truth',linewidth=3, color=mlt.colors.to_rgba(sns.xkcd_rgb['light grey']))
-        index_ = [[0, int(labels[i][0])]]
-
-        for j in range(1,n):
-            if labels[i][j]-labels[i][j-1]!= 0:
-                index_.append([j, int(labels[i][j])])
-
-        for k in range(1, len(index_)):
-            if data == 'TUM':
-                if index_[k-1][1]>13:
-                    dd = index_[k-1][1]-1
-                else:
-                    dd = index_[k-1][1]
-            else:
-                dd = index_[k - 1][1]
-            axs[i].plot(t[index_[k-1][0]:index_[k][0]], reba_to_plot[index_[k-1][0]:index_[k][0]], linewidth=3,
-                        color=mlt.colors.to_rgba(sns.xkcd_rgb[col_list[dd]]), label=classes_list[dd])
+        axs[i].plot(t, y_test[i], label='Ground Truth',linewidth=3, color=mlt.colors.to_rgba(sns.xkcd_rgb['red']))
+        axs[i].plot(t, P_test[i], label='Prediction',linewidth=3, color=mlt.colors.to_rgba(sns.xkcd_rgb['black']))
 
         mse = mean_squared_error(P_test[i], y_test[i])
         axs[i].set_xticks([])

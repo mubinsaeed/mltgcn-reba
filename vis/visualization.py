@@ -10,23 +10,23 @@ from vis.plotCM import *
 from util.utils import *
 import yaml
 try:
-    with open('./config_files/config_UW_data.yml', 'r') as file:
+    with open('../config_files/config_UW_data.yml', 'r') as file:
         config_data = yaml.safe_load(file)
 except Exception as e:
     print('Error reading the config_data file')
 try:
-    with open('./config_files/config_UW_class.yml', 'r') as file:
+    with open('../config_files/config_UW_exp.yml', 'r') as file:
         config_exp = yaml.safe_load(file)
 except Exception as e:
     print('Error reading the config_data file')
 
 base_data_dir = config_data['base_data_dir']
 num_class = config_data['NUMBER_OF_CLASSES']
-val_split = np.load(base_data_dir+config_data['val_dir'])
+#val_split = np.load(base_data_dir+config_data['val_dir'])
 threed_poseloc = base_data_dir+config_data['threed_poseloc']
-labelloc = base_data_dir+config_data['label_dir']
+#labelloc = base_data_dir+config_data['label_dir']
 reba_scores_loc = base_data_dir+config_data['reba_scores_loc']
-labelnames = base_data_dir+config_data['labelnames']
+#labelnames = base_data_dir+config_data['labelnames']
 classes = [
   'walking', 'stand_reach_top', 'box_stand_pick_up_top', 'box_stand_place_mid', 'standing', 'rod_stand_pick_up_top',
   'rod_stand_place_mid', 'box_stand_pick_up_mid', 'rod_stand_pick_up_mid', 'none_bend_none_none',
@@ -36,18 +36,53 @@ classes = [
 
 # base
 EXP_name = 'base'
-CHECKPOINT_PATH =  './outputs/UW/checkpoints/0.001_SmoothREBA_gcnEdtcnREBA_tanh_MSEL1_CrossEntropy.pt'
+CHECKPOINT_PATH =  '../run/outputs-fn/UW/checkpoints/0.0001_regression_output.pt'
 checkpoint = torch.load(CHECKPOINT_PATH)
 n_nodes = [50, 50, 50, 50]
-model = gcnEdtcnREBA_tanh(hidden=n_nodes, kernel_size=4).cuda()
+model = gcn_reg(hidden=n_nodes, kernel_size=4).cuda()
 model.load_state_dict(checkpoint)
 
-listpred_for_CM, labellist, flat_listpred_for_CM, label_gt, label_pred, reba_gt, reba_pred, result, coef_list, EDIT, OVERLAP_F1, MSE = eval(model)
 
-# Results
-res = []
-for k in result.keys():
-    res.append(100*result[k])
+def plot_multiple_predictions_vs_gt(gt_lists, pred_lists):
+    num_plots = len(gt_lists)
+    fig, axs = plt.subplots(num_plots, 1, figsize=(10, 5 * num_plots), sharex=True, sharey=True)
+    if num_plots == 1:
+        axs = [axs]  # Ensure axs is iterable if there's only one subplot
+
+    for i in range(num_plots):
+        gt = gt_lists[i]
+        pred = pred_lists[i]
+
+        # Check if the input lists are of the same length
+        if len(gt) != len(pred):
+            raise ValueError(f"Ground truth and prediction lists at index {i} must have the same length")
+
+        # Scatter plot for ground truth
+        axs[i].scatter(range(len(gt)), gt, color='blue', label='Ground Truth', marker='o')
+
+        # Scatter plot for predictions
+        axs[i].scatter(range(len(pred)), pred, color='red', label='Predictions', marker='x')
+
+        # Add dotted lines between each pair of ground truth and prediction
+        for j in range(len(gt)):
+            axs[i].plot([j, j], [gt[j], pred[j]], 'k--', color='gray', linewidth=0.5)  # Dotted line
+
+        # Add labels and legend
+        axs[i].set_xlabel('Index')
+        axs[i].set_ylabel('Value')
+        axs[i].set_title(f'Subplot {i + 1}: Ground Truth vs Predictions')
+        axs[i].legend()
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+
+    # Show the plot
+    plt.show()
+
+reba_gt, reba_pred, coef_list,  MSE = eval(model)
+
+#
+#plot_multiple_predictions_vs_gt(reba_gt,reba_pred)
 
 print('MSE: \n', MSE)
 print('mean(MSE): \n', np.mean(MSE))
@@ -55,14 +90,6 @@ print('std(MSE): \n', np.std(MSE))
 print('Corr: \n', coef_list)
 print('mean(Corr): \n', np.mean(coef_list))
 print('std(Corr): \n', np.std(coef_list))
-print('meanEdit: ' + str(round(np.mean(EDIT), 4)))
-print('stdEdit: ' + str(round(np.std(EDIT), 4)))
-print('meanF1: ' + str(round(np.mean(OVERLAP_F1), 4)))
-print('stdF1: ' + str(round(np.std(OVERLAP_F1), 4)))
-print('AP_Scores: \n', res)
-print('mean_AP_Score: ' + str(round(np.mean(res), 4)))
-print('std_AP_Score: ' + str(round(np.std(res), 4)))
-#
 #
 # # Plots
 # plot_sequence(listpred_for_CM, labellist, classes, saving_dir='UW_seq_'+EXP_name)
@@ -107,17 +134,21 @@ print('std_AP_Score: ' + str(round(np.std(res), 4)))
 # conf_mat = confusion_matrix(label_gt, flat_listpred_for_CM)
 # np.save('CM_UW_'+EXP_name, conf_mat)
 # plot_confusion_matrix(conf_mat, classes,'CM_UW_'+EXP_name)
-# plot_reba(reba_pred, reba_gt, labellist, classes,data='UW', saving_dir='UW_REBA_'+EXP_name)
+
+
+plot_reba(reba_pred, reba_gt, 0, classes,data='UW', saving_dir='UW_REBA_'+EXP_name)
 
 # %% Compare Confusion Matrices
-CM_dir_base = './CM_UW_base.npy'
-CM_dir_emb = './CM_UW_emb.npy'
 
-conf_mat_base = np.load(CM_dir_base)
-CM_base = plot_confusion_matrix(conf_mat_base, classes, 'UW_conf_mat_base'+'.eps') #'UW_conf_mat_base'+'.png'
+#ToDo
+#CM_dir_base = './CM_UW_base.npy'
+#CM_dir_emb = './CM_UW_emb.npy'
 
-conf_mat_emb = np.load(CM_dir_emb)
-CM_emb = plot_confusion_matrix(conf_mat_emb, classes, 'UW_conf_mat_emb'+'.eps')#'UW_conf_mat_emb'+'.png'
+#conf_mat_base = np.load(CM_dir_base)
+#CM_base = plot_confusion_matrix(conf_mat_base, classes, 'UW_conf_mat_base'+'.eps') #'UW_conf_mat_base'+'.png'
 
-CM = CM_base - CM_emb
-plot_confusion_matrix(CM, classes, 'UW_diff'+'.eps', normalize=False,cmap=plt.cm.PiYG)
+#conf_mat_emb = np.load(CM_dir_emb)
+#CM_emb = plot_confusion_matrix(conf_mat_emb, classes, 'UW_conf_mat_emb'+'.eps')#'UW_conf_mat_emb'+'.png'
+
+#CM = CM_base - CM_emb
+#plot_confusion_matrix(CM, classes, 'UW_diff'+'.eps', normalize=False,cmap=plt.cm.PiYG)

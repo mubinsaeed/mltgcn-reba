@@ -3,17 +3,15 @@ import random
 from losses.loss_UW import *
 from models.model_MT_UW import *
 from util.Uwdatareader_UW import *
-#from val.validate_model_UW import val, EarlyStopping  Todo
-#from vis.plotCM import * Todo
-import sklearn
+from val.validate_model_UW import val, EarlyStopping
+from vis.plotCM import *
 import math
 from config_files.config_UW import *
 from tensorboardX import SummaryWriter
-#import torchinfo
-
+from tqdm.auto import tqdm
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-seed = 0
+seed = 1
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
@@ -50,16 +48,19 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     output_file.write('\n------- lr: ' + str(lr_) + ', batch_size: ' + str(config_exp['BATCH_SIZE']) + '-----------\n')
     output_file.close()
     # initialize the early_stopping object
-    #early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
+    early_stopping = EarlyStopping(patience=config_exp['PATIENCE'], verbose=True)
 
-    for epoch in range(config_exp['STEPS']):
+    for epoch in tqdm(range(config_exp['STEPS'])):
         output_file = open(config_exp['log_dir'] + config_exp['output_name'], 'a')
         losses = 0.0
         losses_class = 0.0
         losses_reg = 0.0
+        stepp = 0
         for local_im, reba_gt in generator_train:
+            stepp+=1
             local_im,  reba_gt = local_im.float().cuda(), reba_gt.float().cuda()
             #local_im = np.array()
+            local_im, reba_gt = torch.unsqueeze(local_im, dim=0), torch.unsqueeze(reba_gt, dim=0)
             loss_class, loss_reg, loss = mt_losses(local_im, [reba_gt])
             optimizer_.zero_grad()
             loss.backward()
@@ -69,26 +70,29 @@ def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
             losses = losses + loss.cpu().data.numpy()
             losses_class = losses_class + loss_class.cpu().data.numpy()
             losses_reg = losses_reg + loss_reg.cpu().data.numpy()
+
+            if stepp%1000 == 0:
+                print(epoch, ': Batch no:',stepp ,': Train running loss: ', np.round(losses, 4))
+
             #writer.add_scalar('Training/Batch Loss Reg', losses_reg.item(), global_step=stepp)
            # stepp += 1
             #writer.flush()
-
-        print(epoch, ': Train: ', np.round(losses, 4), ' Train_class: ',
-              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4))
-        writer.add_scalar('Training/Epoch Loss Reg', losses_reg.item(), global_step=epoch)
+        print(epoch, ': Train: ', np.round(losses/stepp, 4), ' Train_class: ',
+              np.round(losses_class/stepp, 4), ' Train_reg: ', np.round(losses_reg/stepp, 4))
+        writer.add_scalar('Training/Epoch Loss Reg', losses_reg.item()/stepp, global_step=epoch)
 
         vallosses, vallosses_reg, vallosses_class = val(generator_val, model_, mt_losses)
         writer.add_scalar('Validation/Epoch Loss Reg', vallosses_reg.item(), global_step=epoch)
 
-        print(epoch, ': Train: ', np.round(losses, 4), ' Val: ', np.round(vallosses, 4), ' Train_class: ',
-              np.round(losses_class, 4), ' Train_reg: ', np.round(losses_reg, 4), ' Val_class: ', np.round(vallosses_class, 4),
+        print(epoch, ': Train: ', np.round(losses/stepp, 4), ' Val: ', np.round(vallosses, 4), ' Train_class: ',
+              np.round(losses_class/stepp, 4), ' Train_reg: ', np.round(losses_reg/stepp, 4), ' Val_class: ', np.round(vallosses_class, 4),
               ' Val_reg: ', np.round(vallosses_reg, 4))
         #writer.add_hparams({'lr': lr_}, {'Trainingloss':losses_reg.item(),'Validationloss': vallosses_reg.item()},global_step=epoch)
         writer.flush()
 
         output_file.write(
             'EPOCH: %02d\t TrainLoss: %0.04f \t ValLoss: %0.04f \t Train_class: %0.04f \t Train_reg: %0.04f \t Val_class: %0.04f \t Val_reg: %0.04f\n' % (
-                epoch, np.round(losses, 4), np.round(vallosses, 4), np.round(losses_class, 4), np.round(losses_reg, 4),
+                epoch, np.round(losses/stepp, 4), np.round(vallosses, 4), np.round(losses_class/stepp, 4), np.round(losses_reg/stepp, 4),
                 np.round(vallosses_class, 4), np.round(vallosses_reg, 4)))
 
         output_file.close()
@@ -119,28 +123,28 @@ val_generator = data.DataLoader(val_set, num_workers=0, pin_memory=True, worker_
 n_layers = len(config_exp['n_nodes'])
 max_len = max(np.max(training_set.max_len), np.max(val_set.max_len))
 max_len = int(np.ceil(max_len / (2 ** n_layers))) * 2 ** n_layers
-training_set.mask_data(max_len, mask_value=-1)
-val_set.mask_data(max_len, mask_value=-1)
-print(colored('Maximum sequence length: ' + str(max_len), 'blue'))
-print(colored('Size of input (training set): ' + str((
-    len(training_set.poselist), training_set.poselist[-1].shape[0],
-    training_set.poselist[-1].shape[1],
-    training_set.poselist[-1].shape[2])), 'blue'))
+#training_set.mask_data(max_len, mask_value=-1)
+#val_set.mask_data(max_len, mask_value=-1)
+#print(colored('Maximum sequence length: ' + str(max_len), 'blue'))
+#print(colored('Size of input (training set): ' + str((
+  #  len(training_set.poselist), training_set.poselist[-1].shape[0],
+ #   training_set.poselist[-1].shape[1],
+   # training_set.poselist[-1].shape[2])), 'blue'))
 #print(colored(
 #    'Size of output labels (training set): ' + str((len(training_set.labellist), len(training_set.labellist[-1]))),
 #    'blue'))
-print(colored('Size of output reba scores (training set): ' + str(
-    (len(training_set.rebascorelist), training_set.rebascorelist[-1].shape[0])), 'blue'))
+#print(colored('Size of output reba scores (training set): ' + str(
+    #(len(training_set.rebascorelist), training_set.rebascorelist[-1].shape[0])), 'blue'))
 
-print(colored('Size of input (validation set): ' + str((
-    len(val_set.poselist), val_set.poselist[-1].shape[0],
-    val_set.poselist[-1].shape[1],
-    val_set.poselist[-1].shape[2])), 'blue'))
+#print(colored('Size of input (validation set): ' + str((
+    #len(val_set.poselist), val_set.poselist[-1].shape[0],
+    #val_set.poselist[-1].shape[1],
+   # val_set.poselist[-1].shape[2])), 'blue'))
 #print(colored(
 #    'Size of output labels (validation set): ' + str((len(val_set.labellist), len(val_set.labellist[-1]))),
 #    'blue'))
-print(colored('Size of output reba scores (validation set): ' + str(
-    (len(val_set.rebascorelist), val_set.rebascorelist[-1].shape[0])), 'blue'))
+#print(colored('Size of output reba scores (validation set): ' + str(
+   # (len(val_set.rebascorelist), val_set.rebascorelist[-1].shape[0])), 'blue'))
 
 # %% Training
 print(colored('---------------------------- Training ----------------------------', 'green'))
