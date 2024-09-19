@@ -13,6 +13,8 @@ from tensorboardX import SummaryWriter
 #import torchinfo
 from tqdm.auto import tqdm
 
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 seed = 1
 torch.manual_seed(seed)
@@ -150,7 +152,7 @@ for lr in config_exp['LR']:
 
     if config_exp['loss_reg'] == 'MSE' or config_exp['loss_reg'] == 'L1' or config_exp['loss_reg'] == 'SmoothL1':
         #MT_losses = RegLoss(model=model, loss_fn=criterion_class + criterion_reg).cuda()
-        MT_losses = RegLoss(model=model, loss_fn=  criterion_reg).cuda()
+        MT_losses = MultiTask2Loss(model=model, loss_fn=  criterion_reg).cuda()
     elif config_exp['loss_reg'] == 'MSEL1' or config_exp['loss_reg'] == 'MSESmoothL1':
         MT_losses = MultiTask3Loss(model=model, loss_fn=criterion_class + criterion_reg).cuda()
 

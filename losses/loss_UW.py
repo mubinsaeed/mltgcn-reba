@@ -51,13 +51,13 @@ class MultiTask2Loss(nn.Module):
         self.eta = nn.Parameter(torch.FloatTensor(len(loss_fn)).fill_(1.), requires_grad=True)  # uniform_(0., 1.)
 
     def forward(self, input, targets):
-        score, reba_pre = self.model(input)
-        loss_class = self.eta[0] * self.loss_fn[0](score[targets[0] != -1].view(-1, num_class),
-                                                   targets[0][targets[0] != -1].view(-1))
-        loss_reg = self.eta[1] * self.loss_fn[1](reba_pre[targets[1] != -1].view(-1),
-                                                 targets[1][targets[1] != -1].view(-1))
-        total_loss = loss_class + loss_reg
-        return loss_class, loss_reg, total_loss.sum()
+        _, reba_pre = self.model(input)
+        # loss_class = 0 * self.eta[0] * self.loss_fn[0](score[targets[0] != -1].view(-1, num_class),
+        #  targets[0][targets[0] != -1].view(-1))
+        loss_reg = self.eta[0] * self.loss_fn[0](reba_pre[targets[0] != -1].view(-1),
+                                                 targets[0][targets[0] != -1].view(-1))
+        total_loss = loss_reg
+        return torch.tensor([0]), loss_reg, total_loss.sum()
 
 class MultiTask3Loss(nn.Module):
     def __init__(self, model, loss_fn):

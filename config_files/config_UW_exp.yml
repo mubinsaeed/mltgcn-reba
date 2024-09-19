@@ -3,7 +3,7 @@ checkpoint_dir: './outputs/UW/checkpoints/'
 pred_dir: './outputs/UW/plots/prediction/'
 CM_dir: './outputs/UW/plots/Confusion_Matrix/'
 
-TASK: 'regression'#'classification' 'regression' 'MTL' 'MTL-Emb'
+TASK: 'MTL-Emb'#'classification' 'regression' 'MTL' 'MTL-Emb'
 STEPS: 500
 BATCH_SIZE: 1
 HISTORY: None
@@ -12,5 +12,5 @@ THREADS: 12
 LR: [5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5]
 NUMBER_OF_CLASSES: 17
 n_nodes: [50, 50, 50, 50] #EDTCN hidden layers size
-PATIENCE: 30 # for early stopping
+PATIENCE: 15 # for early stopping
 loss_reg: MSE #SmoothL1 # MSE # L1 # MSEL1 # MSESmoothL1

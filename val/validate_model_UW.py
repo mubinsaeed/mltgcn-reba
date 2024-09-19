@@ -50,7 +50,7 @@ def eval(model):
             threepose, _, mask = mask_data([threepose], [reba_gt], max_len, mask_value=-1)
 
             x = Variable(torch.Tensor(threepose)).float().cuda()
-            reba_pre, _ = model(x)
+            _, reba_pre = model(x)
             #score = unmask(score.cpu().numpy(), mask)
             reba_pre = unmask(reba_pre.cpu().numpy(), mask)
             #reba_pre = reba_pre.cpu.numpy()
@@ -134,7 +134,7 @@ def bestval(generator, max_len, model, n_class):
             reba_gt  = np.load(reba_scores_loc + seq + '.npy')
             threepose, _, mask = mask_data([threepose], [reba_gt], max_len, mask_value=-1)
             x = Variable(torch.Tensor(threepose)).float().cuda()
-            reba_pre,_ = model(x)
+            _,reba_pre = model(x)
             #score = unmask(score.cpu().numpy(), mask)
             reba_pre = unmask(reba_pre.cpu().numpy(), mask)
             #scorelist = [score]

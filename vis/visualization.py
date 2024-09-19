@@ -1,6 +1,6 @@
 from torch import optim
 
-from vis.plotRibbons import plot_reba, plot_sequence
+from vis.plotRibbons import plot_reba, plot_sequence,plot_reba2
 from val.validate_model_UW import *
 from models.model_MT_UW import *
 # from vis.plotCM import plot_confusion_matrix
@@ -37,7 +37,7 @@ classes = [
 
 # base
 EXP_name = 'base'
-CHECKPOINT_PATH =  '../run/outputs1/UW/checkpoints/0.01_regression_output.pt'
+CHECKPOINT_PATH =  '../run/outputs-multitask-batch32/H36M/checkpoints/5e-05_MTL-Emb_output.pt'
 checkpoint = torch.load(CHECKPOINT_PATH)
 n_nodes = [50, 50, 50, 50]
 model = gcn_reg(hidden=n_nodes, kernel_size=4).cuda()
