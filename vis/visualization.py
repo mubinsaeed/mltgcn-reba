@@ -37,10 +37,10 @@ classes = [
 
 # base
 EXP_name = 'base'
-CHECKPOINT_PATH =  '../run/outputs-multitask-batch32/H36M/checkpoints/5e-05_MTL-Emb_output.pt'
+CHECKPOINT_PATH =  '../run/outputs-multitask-simple_1.0/UW/checkpoints/0.0005_MTL-Emb_output.pt'
 checkpoint = torch.load(CHECKPOINT_PATH)
 n_nodes = [50, 50, 50, 50]
-model = gcn_reg(hidden=n_nodes, kernel_size=4).cuda()
+model = gcnEdtcnREBA_emb(hidden=n_nodes, kernel_size=4).cuda()
 model.load_state_dict(checkpoint)
 
 
@@ -138,7 +138,7 @@ print('std(Corr): \n', np.std(coef_list))
 # plot_confusion_matrix(conf_mat, classes,'CM_UW_'+EXP_name)
 
 
-plot_reba(reba_pred, reba_gt, 0, classes,data='UW', saving_dir='UW_REBA_'+EXP_name)
+plot_reba2(reba_pred, reba_gt, 0, classes,data='UW', saving_dir='UW_REBA_'+EXP_name)
 
 # %% Compare Confusion Matrices
 
