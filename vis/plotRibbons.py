@@ -54,6 +54,33 @@ def plot_sequence(P_test, y_test, classes_list, saving_dir=None):
     plt.show()
 
 
+def plot_reba2(P_test, y_test, labels, classes_list, saving_dir=None, data='UW', sample_size=200):
+    # Ensure that all subjects have the same random indices
+    common_n = min(sample_size, y_test[0].shape[0])  # Find minimum size to avoid exceeding data length
+    common_indices = np.random.choice(y_test[0].shape[0], common_n, replace=False)
+
+    fig, axs = plt.subplots(len(y_test), 1, figsize=(20, 15))
+    if len(y_test) == 1:
+        axs = [axs]
+    for i in range(len(y_test)):
+        # Select the same random samples for each subject
+        t = np.arange(0, common_n)  # Time axis for the selected samples
+        y_test_sampled = y_test[i][common_indices]
+        P_test_sampled = P_test[i][common_indices]
+
+        # Plot Ground Truth and Prediction
+        axs[i].plot(t, y_test_sampled, label='Ground Truth', linewidth=3, color=mlt.colors.to_rgba(sns.xkcd_rgb['red']))
+        axs[i].plot(t, P_test_sampled, label='Prediction', linewidth=3, color=mlt.colors.to_rgba(sns.xkcd_rgb['black']))
+
+        # Compute MSE for the selected samples
+        mse = mean_squared_error(P_test[i], y_test[i])
+        axs[i].set_xticks([])
+        axs[i].set_ylabel(f"MSE: {mse:.01f}%")
+        axs[i].axis("tight")
+
+    plt.tight_layout()
+    plt.show()
+
 def plot_reba(P_test, y_test,labels, classes_list, saving_dir=None, data='UW'):
     fig, axs = plt.subplots(len(y_test), 1, figsize=(20, 15))
     for i in range(len(y_test)):

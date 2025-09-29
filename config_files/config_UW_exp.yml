@@ -9,8 +9,8 @@ BATCH_SIZE: 32
 HISTORY: None
 KERNEL_INIT: "uniform"
 THREADS: 12
-LR: [5e-3, 1e-3, 1e-2, 5e-2,5e-5, 1e-5]
+LR: [ 5e-3, 1e-3,1e-4, 5e-4, 5e-5, 1e-5]
 NUMBER_OF_CLASSES: 17
 n_nodes: [50, 50, 50, 50] #EDTCN hidden layers size
-PATIENCE: 8 # for early stopping
+PATIENCE: 15 # for early stopping
 loss_reg: MSE #SmoothL1 # MSE # L1 # MSEL1 # MSESmoothL1

@@ -23,7 +23,7 @@ except Exception as e:
 
 base_data_dir = config_data['base_data_dir']
 #val_split = np.load(base_data_dir + config_data['val_dir'])
-val_split = np.array(['02','07'])
+val_split = np.array(['08'])
 threed_poseloc = base_data_dir + config_data['threed_poseloc']
 labelloc = base_data_dir + config_data['label_dir']
 #labelnames = list(np.load(base_data_dir + config_data['labelnames']))

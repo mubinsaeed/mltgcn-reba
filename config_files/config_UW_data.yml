@@ -1,4 +1,4 @@
-base_data_dir: '../Data/HM36/'
+base_data_dir: '../Data/HM36_real/'
 train_dir: 'EDTCN/TrainValSplits/train.npy'
 val_dir: 'EDTCN/TrainValSplits/val.npy'
 split: 'EDTCN/TrainValSplits/val.npy'

@@ -9,7 +9,7 @@ import math
 from config_files.config_UW import *
 from tensorboardX import SummaryWriter
 from tqdm.auto import tqdm
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 seed = 1
 torch.manual_seed(seed)
@@ -30,8 +30,10 @@ def _init_fn(worker_id):
 base_data_dir = config_data['base_data_dir']
 #train_split = np.load(base_data_dir + config_data['train_dir'])
 #val_split = np.load(base_data_dir + config_data['val_dir'])
-train_split = np.array(['01','05','04','10','03','06','08','09','11'])
-val_split = np.array(['02','07'])
+train_split = np.array(['01','05','06','07','09','11'])
+#train_split = np.array(['01'])
+val_split = np.array(['08'])
+
 def train(generator_train, generator_val, model_, mt_losses, optimizer_, lr_):
     global vallepochloss
     writer = SummaryWriter(f"testing/lr {lr_}/data")
